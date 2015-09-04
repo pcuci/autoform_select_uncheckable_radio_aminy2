@@ -5,19 +5,21 @@
         <p class="{{higherSelected}}">
           <input type="radio" value="{{this.value}}" {{itemAtts}}/>
           <label for="{{atts.id}}">
-            <span class="firstLine">{{selectedFirstLine}}</span>
-            {{#if selectedFirstSubLine}}
-              <span class="firstSubLine">{{selectedFirstSubLine}}</span>
-            {{/if}}
-            {{#if selectedSecondSubLine}}
-              <span class="secondSubLine">{{selectedSecondSubLine}}</span>
-            {{/if}}
+            <span class="itemLabel">
+              <span class="firstLine">{{selectedFirstLine}}</span>
+              {{#if selectedFirstSubLine}}
+                <span class="firstSubLine">{{selectedFirstSubLine}}</span>
+              {{/if}}
+              {{#if selectedSecondSubLine}}
+                <span class="secondSubLine">{{selectedSecondSubLine}}</span>
+              {{/if}}
+            </span>
           </label>
         </p>
       {{/each}}
     {{else}}
       <p class="fieldLabel">
-        <label>
+        <label class="itemLabel">
           <span class="firstLine">{{this.firstLine}}</span>
           {{#if this.firstSubLine}}
             <span class="firstSubLine">{{this.firstSubLine}}</span>
