@@ -1,14 +1,9 @@
 AutoForm.addInputType "select-uncheckable-radio",
   template: "afUncheckableRadioGroup"
   valueOut: ->
-    console.log("VALUE OUT ------------ VALUE OUT, this", @)
-    console.log("VALUE OUT ------------ VALUE OUT", @find("input[type=radio]:checked").val())
     @find("input[type=radio]:checked").val()
   contextAdjust: (context) ->
-    console.log("context", context)
-    console.log("this.data", Template.currentData())
     ss = AutoForm.getFormSchema()
-    console.log("ss", ss._schema[context.name].label)
 
     label = ss._schema[context.name].label
     # Split on new lines to 3 different lines
@@ -17,9 +12,9 @@ AutoForm.addInputType "select-uncheckable-radio",
     context.firstSubLine = if lines[1] then lines[1] else ""
     context.secondSubLine = if lines[2] then lines[2] else ""
     itemAtts = _.omit(context.atts)
-    console.log("itemAtts", itemAtts)
 
     context.items = []
+    console.log("context", context)
     # Add all defined options
     firstPass = true
     _.each context.selectOptions, (opt) ->
@@ -45,7 +40,6 @@ AutoForm.addInputType "select-uncheckable-radio",
 Template.afUncheckableRadioGroup.helpers
   dsk: Utility.helpers.dsk
   itemAtts: ->
-    console.log("this.selected", this)
     atts = Utility.helpers.itemAttsWithUniqId(@atts)
     atts = Utility.helpers.attsToggleInvalidClass(atts)
     Utility.helpers.attsCheckSelected(atts, @selected)
@@ -55,7 +49,6 @@ Template.afUncheckableRadioGroup.helpers
     else
       ''
   isActive: ->
-    console.log("isActive")
     if Template.currentData().currentValue?.get()
       true
     else
@@ -65,6 +58,8 @@ Template.afUncheckableRadioGroup.helpers
     higherSelected = ''
 
     items = Template.parentData().items
+
+    # Apply style to all left of selected
     foundSelf = false
     passedSelected = false
     _.each(_.clone(items).reverse(), (item) ->
@@ -76,6 +71,27 @@ Template.afUncheckableRadioGroup.helpers
         higherSelected = "higherSelected"
     )
     higherSelected
+  selectedFirstLine: ->
+    firstLine = ''
+    _.each(Template.parentData().items, (item) ->
+      if item.value is Template.parentData().currentValue.get()
+        firstLine = item.firstLine
+    )
+    firstLine
+  selectedFirstSubLine: ->
+    firstSubLine = ''
+    _.each(Template.parentData().items, (item) ->
+      if item.value is Template.parentData().currentValue.get()
+        firstSubLine = item.firstSubLine
+    )
+    firstSubLine
+  selectedSecondSubLine: ->
+    secondSubLine = ''
+    _.each(Template.parentData().items, (item) ->
+      if item.value is Template.parentData().currentValue.get()
+        secondSubLine = item.secondSubLine
+    )
+    secondSubLine
 
 Template.afUncheckableRadioGroup.events
   'click .active input + label': (event, template) ->
@@ -95,25 +111,14 @@ Template.afUncheckableRadioGroup.events
     )
     template.data.items[0].selected = true
 
-# Template.afUncheckableRadioGroupActiveRadio.update = ->
-#   # Updateing selection
-#   console.log("in update! in update! in update! in update! in update! ")
-#   if Template.currentData().currentValue?.get()
-#     Template.currentData().items[0].selected = true
-#     $('input[value=' + Template.currentData().items[0].value + ']').prop('checked', true)
-
-
 Template.afUncheckableRadioGroup.created = ->
   @data.currentValue = new ReactiveVar(@data.value)
   @toggleHigherSelectedCheck = new Tracker.Dependency
 
 Template.afUncheckableRadioGroup.rendered = ->
-  console.log("@", Template.currentData().currentValue)
   @autorun(->
     if Template.currentData().currentValue?.get()
-      console.log("currentValue", Template.currentData().currentValue.get())
-      console.log('input[value=' + Template.currentData().currentValue.get() + ']')
-      $('input[value=' + Template.currentData().currentValue.get() + ']').prop('checked', true)
+      $('.af-uncheck-radio-group[data-schema-key=' + Template.currentData().name + '] input[value=' + Template.currentData().currentValue.get() + ']').prop('checked', true)
       Template.instance().toggleHigherSelectedCheck.changed()
   )
   addAutoFormHooks(AutoForm.getFormId())
@@ -122,7 +127,6 @@ addAutoFormHooks = (formId) ->
   AutoForm.addHooks formId,
     before:
       update: (doc) ->
-        console.log("                       --- before updateDOC", doc)
         # Need to unset fields that have previously been set
         ss = AutoForm.getFormSchema(formId)
         uncheckableRadioFieldKeys = []
@@ -140,17 +144,25 @@ addAutoFormHooks = (formId) ->
         @.result(doc)
 
 Template.afUncheckableRadioGroup.copyAs('afUncheckableRadioGroup_materialize');
-#Template.afUncheckableRadioGroupActiveRadios.copyAs('afUncheckableRadioGroupActiveRadios_materialize');
-#Template.afUncheckableRadioGroupActiveRadio.copyAs('afUncheckableRadioGroupActiveRadio_materialize');
-
 
 Template.autoForm.onRendered(->
-  # console.log("in autoform rendered")
-  # spans = $('span.spanText')
-  # console.log("span.spanTexts", spans)
-  # console.log(".parentNode.parentNode.parentNode.clientWidth", spans[3].parentNode.parentNode.parentNode.clientWidth)
-  # console.log(".parentNode.parentNode.offsetLeft", spans[3].parentNode.parentNode.offsetLeft)
-  # offset = spans[3].parentNode.parentNode.parentNode.clientWidth - spans[3].clientWidth
-  # console.log('parent:', $(spans[3].parentNode.parentNode.parentNode))
-  # $(spans[3]).offset({left: (-1 * offset)})
+  # this.autorun( ->
+  #   console.log("window width", rwindow.innerWidth())
+  #   spans = $('span.firstLine')
+  #   console.log("spans", spans)
+  #   console.log(".parentNode.parentNode.parentNode.clientWidth", $(spans[3].parentNode.parentNode.parentNode).offset().left)
+  #   console.log(".parentNode.parentNode.offsetLeft", spans[3].parentNode.parentNode.offsetLeft)
+  #   offsetLeft = spans[3].parentNode.parentNode.offsetLeft
+  #   offsetLeftR = -offsetLeft
+  #   console.log("offsetLeft", offsetLeftR)
+  #   console.log('parent:', $(spans[3].parentNode.parentNode.parentNode))
+  #   #$(spans[3]).offset({left: 0})
+  #   console.log(".parentNode.parentNode.position", $(spans[3].parentNode.parentNode).position())
+  #   padding = parseInt($(spans[3].parentNode.parentNode.parentNode).children().first().find('label').css('padding-left').replace(/px/,""))
+  #   console.log('padding', padding)
+  #   offsetSpan = $(spans[3].parentNode.parentNode.parentNode).offset().left
+  #   console.log('padding', offsetSpan + padding)
+  #   console.log("off", {left: offsetSpan})
+  #   $(spans[3]).offset({left: offsetSpan + padding})
+  # )
 )

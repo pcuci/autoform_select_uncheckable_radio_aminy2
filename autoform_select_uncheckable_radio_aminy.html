@@ -5,12 +5,12 @@
         <p class="{{higherSelected}}">
           <input type="radio" value="{{this.value}}" {{itemAtts}}/>
           <label for="{{atts.id}}">
-            <span class="firstLine">{{this.firstLine}}</span>
-            {{#if this.firstSubLine}}
-              <span class="firstSubLine">{{this.firstSubLine}}</span>
+            <span class="firstLine">{{selectedFirstLine}}</span>
+            {{#if selectedFirstSubLine}}
+              <span class="firstSubLine">{{selectedFirstSubLine}}</span>
             {{/if}}
-            {{#if this.secondSubLine}}
-              <span class="secondSubLine">{{this.secondSubLine}}</span>
+            {{#if selectedSecondSubLine}}
+              <span class="secondSubLine">{{selectedSecondSubLine}}</span>
             {{/if}}
           </label>
         </p>
