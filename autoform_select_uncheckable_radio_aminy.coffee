@@ -14,7 +14,6 @@ AutoForm.addInputType "select-uncheckable-radio",
     itemAtts = _.omit(context.atts)
 
     context.items = []
-    console.log("context", context)
     # Add all defined options
     firstPass = true
     _.each context.selectOptions, (opt) ->
