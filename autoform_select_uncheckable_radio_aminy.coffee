@@ -96,14 +96,11 @@ Template.afUncheckableRadioGroup.events
   'click .active input + label': (event, template) ->
     event.preventDefault()
     lastValue = template.get("currentValue").get()
-
     selected = $(event.currentTarget.parentNode).children('input')
-
     template.get("currentValue").set(undefined) # Force autorun for same value
     if lastValue isnt selected.val()
       template.get("currentValue").set(selected.val())
   'click p.fieldLabel label': (event, template) ->
-    console.log('template', template.get("currentValue"))
     template.get("currentValue").set(undefined)
     template.get("currentValue").set(template.data.items[0].value)
     _.each(template.data.items, (item) ->
@@ -127,22 +124,23 @@ addAutoFormHooks = (formId) ->
   AutoForm.addHooks formId,
     before:
       update: (doc) ->
-        console.log("AutoForm.addHooks @", @)
-        console.log("doc", doc)
-        console.log("@currentDoc", @currentDoc)
+        fieldList = AutoForm.Utility.stringToArray(@formAttributes.fields, 'AutoForm: fields attribute must be an array or a string containing a comma-delimited list of fields')
         # Need to unset fields that have previously been set
         ss = AutoForm.getFormSchema(formId)
         uncheckableRadioFieldKeys = []
         # Find all fields of type select-uncheckable-radio
-        _.each(ss._schemaKeys, (key) ->
+        activeFields = _.intersection(ss._schemaKeys, fieldList)
+        _.each(activeFields, (key) ->
           if ss._schema[key].autoform?.type is "select-uncheckable-radio"
             uncheckableRadioFieldKeys.push(key)
         )
         doc.$unset = {}
         _.each(uncheckableRadioFieldKeys, (key) ->
-          console.log("key", key)
           # Unset undefined fields only, i.e.: select-uncheckable-radio types which have just been unselected
-          unless doc.$set[key]
+          if doc.$set
+            unless doc.$set[key]
+              doc.$unset[key] = ""
+          else
             doc.$unset[key] = ""
         )
         @.result(doc)
