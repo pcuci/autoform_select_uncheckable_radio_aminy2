@@ -43,12 +43,12 @@ Template.afUncheckableRadioGroup.helpers
     atts = Utility.helpers.attsToggleInvalidClass(atts)
     Utility.helpers.attsCheckSelected(atts, @selected)
   active: ->
-    if Template.currentData().currentValue?.get()
+    if Template.instance().get("currentValue")?.get()
       'active'
     else
       ''
   isActive: ->
-    if Template.currentData().currentValue?.get()
+    if Template.instance().get("currentValue")?.get()
       true
     else
       false
@@ -64,7 +64,7 @@ Template.afUncheckableRadioGroup.helpers
     _.each(_.clone(items).reverse(), (item) ->
       if passedSelected and (item.value is Template.currentData().value)
         foundSelf = true
-      if item.value is Template.parentData().currentValue.get() # Template.instance().currentValue
+      if item.value is Template.instance().get("currentValue").get()
         passedSelected = true
       if foundSelf and passedSelected
         higherSelected = "higherSelected"
@@ -73,21 +73,21 @@ Template.afUncheckableRadioGroup.helpers
   selectedFirstLine: ->
     firstLine = ''
     _.each(Template.parentData().items, (item) ->
-      if item.value is Template.parentData().currentValue.get()
+      if item.value is Template.instance().get("currentValue").get()
         firstLine = item.firstLine
     )
     firstLine
   selectedFirstSubLine: ->
     firstSubLine = ''
     _.each(Template.parentData().items, (item) ->
-      if item.value is Template.parentData().currentValue.get()
+      if item.value is Template.instance().get("currentValue").get()
         firstSubLine = item.firstSubLine
     )
     firstSubLine
   selectedSecondSubLine: ->
     secondSubLine = ''
     _.each(Template.parentData().items, (item) ->
-      if item.value is Template.parentData().currentValue.get()
+      if item.value is Template.instance().get("currentValue").get()
         secondSubLine = item.secondSubLine
     )
     secondSubLine
@@ -95,29 +95,30 @@ Template.afUncheckableRadioGroup.helpers
 Template.afUncheckableRadioGroup.events
   'click .active input + label': (event, template) ->
     event.preventDefault()
-    lastValue = template.data.currentValue.get()
+    lastValue = template.get("currentValue").get()
 
     selected = $(event.currentTarget.parentNode).children('input')
 
-    template.data.currentValue.set(undefined) # Force autorun for same value
+    template.get("currentValue").set(undefined) # Force autorun for same value
     if lastValue isnt selected.val()
-      template.data.currentValue.set(selected.val())
+      template.get("currentValue").set(selected.val())
   'click p.fieldLabel label': (event, template) ->
-    template.data.currentValue.set(undefined)
-    template.data.currentValue.set(template.data.items[0].value)
+    console.log('template', template.get("currentValue"))
+    template.get("currentValue").set(undefined)
+    template.get("currentValue").set(template.data.items[0].value)
     _.each(template.data.items, (item) ->
       item.selected = false
     )
     template.data.items[0].selected = true
 
 Template.afUncheckableRadioGroup.created = ->
-  @data.currentValue = new ReactiveVar(@data.value)
+  @currentValue = new ReactiveVar(@data.value)
   @toggleHigherSelectedCheck = new Tracker.Dependency
 
 Template.afUncheckableRadioGroup.rendered = ->
   @autorun(->
-    if Template.currentData().currentValue?.get()
-      $('.af-uncheck-radio-group[data-schema-key=' + Template.currentData().name + '] input[value=' + Template.currentData().currentValue.get() + ']').prop('checked', true)
+    if Template.instance().get("currentValue").get()
+      $('.af-uncheck-radio-group[data-schema-key=' + Template.currentData().name + '] input[value=' + Template.instance().get("currentValue").get() + ']').prop('checked', true)
       Template.instance().toggleHigherSelectedCheck.changed()
   )
   addAutoFormHooks(AutoForm.getFormId())
@@ -126,6 +127,9 @@ addAutoFormHooks = (formId) ->
   AutoForm.addHooks formId,
     before:
       update: (doc) ->
+        console.log("AutoForm.addHooks @", @)
+        console.log("doc", doc)
+        console.log("@currentDoc", @currentDoc)
         # Need to unset fields that have previously been set
         ss = AutoForm.getFormSchema(formId)
         uncheckableRadioFieldKeys = []
@@ -136,32 +140,11 @@ addAutoFormHooks = (formId) ->
         )
         doc.$unset = {}
         _.each(uncheckableRadioFieldKeys, (key) ->
-          # Only unset undefined fields, i.e.: select-uncheckable-radio types which have just been unselected
-          if not doc.$set[key]
+          console.log("key", key)
+          # Unset undefined fields only, i.e.: select-uncheckable-radio types which have just been unselected
+          unless doc.$set[key]
             doc.$unset[key] = ""
         )
         @.result(doc)
 
 Template.afUncheckableRadioGroup.copyAs('afUncheckableRadioGroup_materialize');
-
-Template.autoForm.onRendered(->
-  # this.autorun( ->
-  #   console.log("window width", rwindow.innerWidth())
-  #   spans = $('span.firstLine')
-  #   console.log("spans", spans)
-  #   console.log(".parentNode.parentNode.parentNode.clientWidth", $(spans[3].parentNode.parentNode.parentNode).offset().left)
-  #   console.log(".parentNode.parentNode.offsetLeft", spans[3].parentNode.parentNode.offsetLeft)
-  #   offsetLeft = spans[3].parentNode.parentNode.offsetLeft
-  #   offsetLeftR = -offsetLeft
-  #   console.log("offsetLeft", offsetLeftR)
-  #   console.log('parent:', $(spans[3].parentNode.parentNode.parentNode))
-  #   #$(spans[3]).offset({left: 0})
-  #   console.log(".parentNode.parentNode.position", $(spans[3].parentNode.parentNode).position())
-  #   padding = parseInt($(spans[3].parentNode.parentNode.parentNode).children().first().find('label').css('padding-left').replace(/px/,""))
-  #   console.log('padding', padding)
-  #   offsetSpan = $(spans[3].parentNode.parentNode.parentNode).offset().left
-  #   console.log('padding', offsetSpan + padding)
-  #   console.log("off", {left: offsetSpan})
-  #   $(spans[3]).offset({left: offsetSpan + padding})
-  # )
-)
